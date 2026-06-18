@@ -2,6 +2,7 @@ const calendarEl = document.querySelector("#calendar");
 const monthTitleEl = document.querySelector("#monthTitle");
 const syncStatusEl = document.querySelector("#syncStatus");
 const fullscreenButton = document.querySelector("#fullscreenButton");
+const todayButton = document.querySelector("#todayButton");
 const dayDialog = document.querySelector("#dayDialog");
 const dialogBackdrop = document.querySelector("#dialogBackdrop");
 const dialogClose = document.querySelector("#dialogClose");
@@ -77,10 +78,10 @@ const LUNAR_DAY_NAMES = [
 const MAX_PREVIEW_EVENTS = 3;
 
 const PRIORITIES = {
-  urgent: { className: "priority-urgent" },
-  high: { className: "priority-high" },
-  normal: { className: "priority-normal" },
-  low: { className: "priority-low" },
+  urgent: { className: "priority-urgent", rank: 0 },
+  high: { className: "priority-high", rank: 1 },
+  normal: { className: "priority-normal", rank: 2 },
+  low: { className: "priority-low", rank: 3 },
 };
 
 let events = [];
@@ -96,6 +97,13 @@ document.querySelector("#prevMonth").addEventListener("click", () => {
 
 document.querySelector("#nextMonth").addEventListener("click", () => {
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+  render();
+});
+
+todayButton.addEventListener("click", () => {
+  const today = new Date();
+  currentMonth = startOfMonth(today);
+  selectedDate = toDateKey(today);
   render();
 });
 
@@ -220,7 +228,7 @@ function renderCalendar() {
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const dateKey = toDateKey(date);
-    const dayEvents = byDate.get(dateKey) || [];
+    const dayEvents = sortEventsForDisplay(byDate.get(dateKey) || []);
     const previewEvents = dayEvents.slice(0, MAX_PREVIEW_EVENTS);
     const dayMeta = getDayMeta(date);
     const button = document.createElement("button");
@@ -241,6 +249,15 @@ function renderCalendar() {
         <span class="day-meta">
           ${dayMeta.holiday ? `<span class="holiday">${escapeHtml(dayMeta.holiday)}</span>` : ""}
           <span class="lunar">${escapeHtml(dayMeta.lunar)}</span>
+          ${
+            dayEvents.length
+              ? `<span class="event-dots" aria-label="${dayEvents.length} \u4ef6\u4e8b\u60c5">
+                  ${dayEvents
+                    .map((item) => `<span class="event-dot ${getPriority(item).className}"></span>`)
+                    .join("")}
+                </span>`
+              : ""
+          }
         </span>
       </span>
       <span class="badges">
@@ -292,6 +309,18 @@ function getPriority(item) {
   return PRIORITIES[item.priority] || PRIORITIES.normal;
 }
 
+function sortEventsForDisplay(items) {
+  return [...items].sort((a, b) => {
+    const priorityCompare = getPriority(a).rank - getPriority(b).rank;
+    if (priorityCompare !== 0) return priorityCompare;
+
+    const timeCompare = String(a.time || "99:99").localeCompare(String(b.time || "99:99"));
+    if (timeCompare !== 0) return timeCompare;
+
+    return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
+  });
+}
+
 function openDayDialog(dateKey) {
   renderDayDialog(dateKey);
   dayDialog.classList.add("open");
@@ -301,10 +330,10 @@ function openDayDialog(dateKey) {
 function renderDayDialog(dateKey) {
   const date = fromDateKey(dateKey);
   const dayMeta = getDayMeta(date);
-  const dayEvents = events.filter((item) => item.date === dateKey);
+  const dayEvents = sortEventsForDisplay(events.filter((item) => item.date === dateKey));
 
   dialogTitle.textContent = fullDateFormatter.format(date);
-  dialogMeta.textContent = [dayMeta.holiday, dayMeta.lunar].filter(Boolean).join(" · ");
+  dialogMeta.textContent = [dayMeta.holiday, dayMeta.lunar].filter(Boolean).join(" \u00b7 ");
   dialogEvents.innerHTML =
     dayEvents.length > 0
       ? dayEvents

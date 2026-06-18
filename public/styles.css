@@ -153,6 +153,14 @@ h2 {
   text-align: center;
 }
 
+.month-title {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 .icon-button {
   width: 44px;
   height: 44px;
@@ -166,6 +174,21 @@ h2 {
 
 .icon-button:hover {
   border-color: var(--accent);
+}
+
+.today-button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff8ef;
+  color: var(--accent-strong);
+  padding: 5px 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.today-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .weekdays,
@@ -263,6 +286,22 @@ h2 {
   max-width: 82px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.event-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 3px;
+  max-width: 82px;
+  margin-top: 3px;
+}
+
+.event-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
 }
 
 .badges {
