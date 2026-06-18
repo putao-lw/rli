@@ -3,6 +3,9 @@ npm-debug.log*
 server.log
 server.err.log
 data/*.tmp
+data/reminders.json
+data/reminders.json.tmp
+tools/*.local.ps1
 
 android/.gradle/
 android/build/

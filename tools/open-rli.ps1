@@ -7,10 +7,15 @@ param(
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
+$LocalEmailConfig = Join-Path $PSScriptRoot "email.local.ps1"
 $DisplayPort = 14785
 $ManagePort = 14786
 $TargetPort = if ($Mode -eq "display") { $DisplayPort } else { $ManagePort }
 $Url = "http://127.0.0.1:$TargetPort/"
+
+if (Test-Path -LiteralPath $LocalEmailConfig) {
+  . $LocalEmailConfig
+}
 
 function Test-ListenPort {
   param([int] $Port)

@@ -44,15 +44,30 @@ http://localhost:14785/api/health
 
 1. 安装 Node.js 18 或更新版本。
 2. 上传项目代码。
-3. 在项目目录执行：
+3. 配置邮件提醒环境变量：
+
+```bash
+export SMTP_HOST=smtp.qq.com
+export SMTP_PORT=465
+export SMTP_SECURE=true
+export SMTP_USER=你的QQ或Foxmail邮箱
+export SMTP_PASS=你的邮箱授权码
+export MAIL_FROM='"日历同步" <你的QQ或Foxmail邮箱>'
+export REMINDER_TO=提醒接收邮箱
+export REMINDER_MINUTES=10,5
+```
+
+也可以把这些变量写到项目根目录的 `.env` 文件中，`.env` 不会提交到 Git。
+
+4. 在项目目录执行：
 
 ```bash
 npm install --omit=dev
 PORT=14785 MANAGE_PORT=14786 npm start
 ```
 
-4. 云服务器安全组和系统防火墙放行 `14785` 和 `14786` 端口。
-5. 手机 APK 里填写服务器地址，例如：
+5. 云服务器安全组和系统防火墙放行 `14785` 和 `14786` 端口。
+6. 手机 APK 里填写服务器地址，例如：
 
 ```text
 http://你的服务器IP:14785

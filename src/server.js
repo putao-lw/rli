@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const express = require("express");
 const fs = require("fs/promises");
 const path = require("path");
+const { createReminderService } = require("./reminder-service");
 
 const DISPLAY_PORT = Number(process.env.PORT || 14785);
 const MANAGE_PORT = Number(process.env.MANAGE_PORT || 14786);
@@ -10,6 +11,7 @@ const DATA_DIR = path.join(__dirname, "..", "data");
 const DATA_FILE = path.join(DATA_DIR, "events.json");
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 const MANAGE_DIR = path.join(__dirname, "..", "manage");
+const ENV_FILE = path.join(__dirname, "..", ".env");
 
 const clients = new Set();
 const PRIORITY_RANK = {
@@ -19,6 +21,33 @@ const PRIORITY_RANK = {
   low: 3,
 };
 let mutationQueue = Promise.resolve();
+let reminderService;
+
+loadEnvFile(ENV_FILE);
+
+function loadEnvFile(filePath) {
+  try {
+    const raw = require("fs").readFileSync(filePath, "utf8");
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+      const index = trimmed.indexOf("=");
+      const key = trimmed.slice(0, index).trim();
+      let value = trimmed.slice(index + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (key && process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  } catch {
+    // Local .env is optional and intentionally ignored by git.
+  }
+}
 
 async function ensureStore() {
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -203,7 +232,15 @@ function createApp(staticDir, port) {
       port,
       displayPort: DISPLAY_PORT,
       managePort: MANAGE_PORT,
+      reminders: reminderService ? reminderService.getConfig() : { enabled: false },
       time: new Date().toISOString(),
+    });
+  });
+
+  app.get("/api/reminders/status", (req, res) => {
+    res.json({
+      ok: true,
+      reminders: reminderService ? reminderService.getConfig() : { enabled: false },
     });
   });
 
@@ -343,6 +380,13 @@ function listen(app, port, name) {
 
 ensureStore()
   .then(() => {
+    reminderService = createReminderService({
+      dataDir: DATA_DIR,
+      readEvents,
+    });
+    reminderService.start().catch((error) => {
+      console.error("Failed to start reminder service", error);
+    });
     listen(createApp(PUBLIC_DIR, DISPLAY_PORT), DISPLAY_PORT, "Rli Calendar Display");
     if (MANAGE_PORT !== DISPLAY_PORT) {
       listen(createApp(MANAGE_DIR, MANAGE_PORT), MANAGE_PORT, "Rli Calendar Manage");
