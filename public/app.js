@@ -1,23 +1,13 @@
 const calendarEl = document.querySelector("#calendar");
 const monthTitleEl = document.querySelector("#monthTitle");
-const selectedDateTitleEl = document.querySelector("#selectedDateTitle");
-const taskListEl = document.querySelector("#taskList");
 const syncStatusEl = document.querySelector("#syncStatus");
-const quickForm = document.querySelector("#quickForm");
-const taskTitle = document.querySelector("#taskTitle");
-const taskNote = document.querySelector("#taskNote");
-
-const dayFormatter = new Intl.DateTimeFormat("zh-CN", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  weekday: "long",
-});
+const fullscreenButton = document.querySelector("#fullscreenButton");
 
 let events = [];
 let currentMonth = startOfMonth(new Date());
 let selectedDate = toDateKey(new Date());
 let stream;
+let pageFullscreen = false;
 
 document.querySelector("#prevMonth").addEventListener("click", () => {
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
@@ -29,25 +19,27 @@ document.querySelector("#nextMonth").addEventListener("click", () => {
   render();
 });
 
-quickForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const title = taskTitle.value.trim();
-  const note = taskNote.value.trim();
-  if (!title) return;
-
+fullscreenButton.addEventListener("click", async () => {
   try {
-    await request("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: selectedDate, title, note }),
-    });
-    taskTitle.value = "";
-    taskNote.value = "";
-    await loadEvents();
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      setPageFullscreen(false);
+    } else if (pageFullscreen) {
+      setPageFullscreen(false);
+    } else if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+      if (!document.fullscreenElement) {
+        setPageFullscreen(true);
+      }
+    } else {
+      setPageFullscreen(true);
+    }
   } catch (error) {
-    setStatus(error.message, "bad");
+    setPageFullscreen(true);
   }
 });
+
+document.addEventListener("fullscreenchange", updateFullscreenButton);
 
 function startOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -60,21 +52,28 @@ function toDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-function fromDateKey(dateKey) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
 function setStatus(message, type) {
   syncStatusEl.textContent = message;
   syncStatusEl.className = `status ${type || ""}`.trim();
+}
+
+function updateFullscreenButton() {
+  fullscreenButton.textContent = document.fullscreenElement || pageFullscreen
+    ? "\u9000\u51fa\u5168\u5c4f"
+    : "\u5168\u5c4f";
+}
+
+function setPageFullscreen(enabled) {
+  pageFullscreen = enabled;
+  document.body.classList.toggle("page-fullscreen", enabled);
+  updateFullscreenButton();
 }
 
 async function request(url, options) {
   const response = await fetch(url, options);
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || "请求失败");
+    throw new Error(data.error || "\u8bf7\u6c42\u5931\u8d25");
   }
   return data;
 }
@@ -91,23 +90,21 @@ function connectStream() {
   }
 
   stream = new EventSource("/api/stream");
-  stream.addEventListener("ready", () => setStatus("实时同步已连接", "ok"));
+  stream.addEventListener("ready", () => setStatus("\u5b9e\u65f6\u540c\u6b65\u5df2\u8fde\u63a5", "ok"));
   stream.addEventListener("sync", (message) => {
     const data = JSON.parse(message.data);
     events = data.events || [];
-    setStatus("已同步", "ok");
+    setStatus("\u5df2\u540c\u6b65", "ok");
     render();
   });
   stream.onerror = () => {
-    setStatus("同步连接断开，正在重连", "bad");
+    setStatus("\u540c\u6b65\u8fde\u63a5\u65ad\u5f00\uff0c\u6b63\u5728\u91cd\u8fde", "bad");
   };
 }
 
 function render() {
-  monthTitleEl.textContent = `${currentMonth.getFullYear()}年 ${currentMonth.getMonth() + 1}月`;
-  selectedDateTitleEl.textContent = dayFormatter.format(fromDateKey(selectedDate));
+  monthTitleEl.textContent = `${currentMonth.getFullYear()}\u5e74 ${currentMonth.getMonth() + 1}\u6708`;
   renderCalendar();
-  renderTaskList();
 }
 
 function renderCalendar() {
@@ -143,10 +140,10 @@ function renderCalendar() {
       <span class="date-number">${date.getDate()}</span>
       <span class="badges">
         ${dayEvents
-          .slice(0, 3)
+          .slice(0, 4)
           .map((item) => `<span class="badge">${escapeHtml(item.title)}</span>`)
           .join("")}
-        ${dayEvents.length > 3 ? `<span class="more">还有 ${dayEvents.length - 3} 条</span>` : ""}
+        ${dayEvents.length > 4 ? `<span class="more">\u8fd8\u6709 ${dayEvents.length - 4} \u6761</span>` : ""}
       </span>
     `;
 
@@ -160,37 +157,6 @@ function renderCalendar() {
 
     calendarEl.appendChild(button);
   }
-}
-
-function renderTaskList() {
-  const selectedEvents = events.filter((item) => item.date === selectedDate);
-  if (selectedEvents.length === 0) {
-    taskListEl.innerHTML = `<div class="empty">这一天还没有登记事情。</div>`;
-    return;
-  }
-
-  taskListEl.innerHTML = selectedEvents
-    .map(
-      (item) => `
-        <article class="task">
-          <strong>${escapeHtml(item.title)}</strong>
-          ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
-          <button type="button" data-delete="${item.id}">删除</button>
-        </article>
-      `,
-    )
-    .join("");
-
-  taskListEl.querySelectorAll("[data-delete]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        await request(`/api/events/${button.dataset.delete}`, { method: "DELETE" });
-        await loadEvents();
-      } catch (error) {
-        setStatus(error.message, "bad");
-      }
-    });
-  });
 }
 
 function escapeHtml(value) {
