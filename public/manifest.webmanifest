@@ -1,0 +1,18 @@
+{
+  "name": "\u65e5\u5386\u540c\u6b65",
+  "short_name": "\u65e5\u5386",
+  "description": "Rli Calendar Sync display",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff7ee",
+  "theme_color": "#e67e45",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -467,3 +467,9 @@ function escapeHtml(value) {
 loadEvents()
   .then(() => connectStream())
   .catch((error) => setStatus(error.message, "bad"));
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+  });
+}

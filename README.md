@@ -28,6 +28,12 @@ http://localhost:14785
 http://localhost:14786
 ```
 
+## 安装到手机或电脑
+
+- iPhone / iPad：用 Safari 打开服务器地址，例如 `http://你的服务器IP:14786`，点分享按钮，选择“添加到主屏幕”。
+- Windows 电脑：桌面上的 `Rli 日历展示.bat` 和 `Rli 日程登记.bat` 可以直接启动本地服务并打开软件窗口。
+- 原生 iOS `.ipa` 需要 macOS、Xcode 和 Apple 签名；当前项目已提供免商店安装的 PWA 版本。
+
 健康检查接口：
 
 ```text
