@@ -77,10 +77,10 @@ const LUNAR_DAY_NAMES = [
 const MAX_PREVIEW_EVENTS = 3;
 
 const PRIORITIES = {
-  urgent: { label: "\u7d27\u6025", className: "priority-urgent" },
-  high: { label: "\u91cd\u8981", className: "priority-high" },
-  normal: { label: "\u666e\u901a", className: "priority-normal" },
-  low: { label: "\u4e0d\u6025", className: "priority-low" },
+  urgent: { className: "priority-urgent" },
+  high: { className: "priority-high" },
+  normal: { className: "priority-normal" },
+  low: { className: "priority-low" },
 };
 
 let events = [];
@@ -249,7 +249,6 @@ function renderCalendar() {
             (item, itemIndex) => `
               <span class="event-line ${getPriority(item).className}">
                 <span class="event-index">${itemIndex + 1}</span>
-                <span class="priority-chip">${getPriority(item).label}</span>
                 <span class="event-text">${escapeHtml(formatEventTitle(item))}</span>
               </span>
             `,
@@ -311,10 +310,9 @@ function renderDayDialog(dateKey) {
       ? dayEvents
           .map(
             (item, index) => `
-              <article class="dialog-event">
+              <article class="dialog-event ${getPriority(item).className}">
                 <span class="dialog-event-index ${getPriority(item).className}">${index + 1}</span>
                 <div>
-                  <span class="dialog-priority ${getPriority(item).className}">${getPriority(item).label}</span>
                   <strong>${escapeHtml(formatEventTitle(item))}</strong>
                   ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
                 </div>
@@ -341,7 +339,7 @@ function getDayMeta(date) {
   const lunarHoliday = LUNAR_HOLIDAYS[lunar.key] || "";
   const holiday = getQingmingName(date) || getNewYearEveName(date) || solarHoliday || lunarHoliday;
   return {
-    lunar: holiday ? lunar.text : `\u519c\u5386${lunar.text}`,
+    lunar: lunar.text,
     holiday,
   };
 }
