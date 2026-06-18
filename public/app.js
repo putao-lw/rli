@@ -273,9 +273,8 @@ function renderCalendar() {
       <span class="badges">
         ${previewEvents
           .map(
-            (item, itemIndex) => `
+            (item) => `
               <span class="event-line ${getPriority(item).className}">
-                <span class="event-index">${itemIndex + 1}</span>
                 <span class="event-text">${escapeHtml(formatEventTitle(item))}</span>
               </span>
             `,

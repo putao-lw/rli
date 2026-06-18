@@ -315,9 +315,8 @@ h2 {
 
 .event-line {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 5px;
   border-radius: 6px;
   color: #71401f;
   padding: 4px 6px;
@@ -330,9 +329,8 @@ h2 {
 }
 
 .day.has-many-events .event-line {
-  grid-template-columns: 16px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 4px;
   min-height: 17px;
   padding: 2px 5px;
   line-height: 1.15;
@@ -359,12 +357,6 @@ h2 {
   margin-top: 3px;
 }
 
-.day.has-many-events .event-index {
-  width: 15px;
-  height: 15px;
-  font-size: 10px;
-}
-
 .priority-urgent {
   background: #ffe0db;
   color: #8f2517;
@@ -383,20 +375,6 @@ h2 {
 .priority-low {
   background: #e7f3df;
   color: #416c2d;
-}
-
-.event-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 999px;
-  background: rgba(201, 95, 42, 0.16);
-  color: var(--accent-strong);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .event-text {
@@ -639,16 +617,9 @@ h2 {
   }
 
   .event-line {
-    grid-template-columns: 16px minmax(0, 1fr);
-    gap: 4px;
+    grid-template-columns: minmax(0, 1fr);
     padding: 4px 5px;
     font-size: 11px;
-  }
-
-  .event-index {
-    width: 15px;
-    height: 15px;
-    font-size: 10px;
   }
 
   .dialog-panel {
