@@ -1,0 +1,284 @@
+:root {
+  color-scheme: light;
+  --bg: #fff7ee;
+  --panel: #ffffff;
+  --panel-soft: #fff1df;
+  --text: #3b2a1f;
+  --muted: #8b6f5a;
+  --line: #efd6bd;
+  --accent: #e67e45;
+  --accent-strong: #c95f2a;
+  --accent-soft: #ffe2ca;
+  --danger: #b94a3a;
+  --shadow: 0 12px 34px rgba(114, 70, 34, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 214, 169, 0.78), transparent 28rem),
+    var(--bg);
+  color: var(--text);
+  font-family:
+    Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.manage-app {
+  width: min(720px, 100% - 24px);
+  margin: 0 auto;
+  padding: 18px 0 28px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.hero p,
+.list-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+h1,
+h2 {
+  margin: 4px 0 0;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: 30px;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+.status {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.status.ok {
+  color: #4d7a3c;
+  border-color: #bdd7a9;
+  background: #f4ffe9;
+}
+
+.status.bad {
+  color: var(--danger);
+  border-color: #efbeb7;
+  background: #fff0ed;
+}
+
+.card {
+  border: 1px solid rgba(239, 214, 189, 0.95);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.card + .card {
+  margin-top: 14px;
+}
+
+form {
+  display: grid;
+  gap: 13px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf4;
+  color: var(--text);
+  outline: none;
+  padding: 11px 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(230, 126, 69, 0.14);
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.primary-button,
+.ghost-button,
+.delete-button {
+  border: 0;
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-weight: 800;
+}
+
+.primary-button {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ghost-button {
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.delete-button {
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--danger);
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.event-list {
+  display: grid;
+  gap: 10px;
+}
+
+.event-card {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.event-card.priority-urgent {
+  background: #ffe0db;
+  color: #8f2517;
+}
+
+.event-card.priority-high {
+  background: #ffe8c5;
+  color: #7a4515;
+}
+
+.event-card.priority-normal {
+  background: var(--accent-soft);
+  color: #71401f;
+}
+
+.event-card.priority-low {
+  background: #e7f3df;
+  color: #416c2d;
+}
+
+.event-card.is-expired {
+  filter: saturate(0.78);
+  opacity: 0.72;
+}
+
+.event-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.event-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.event-time,
+.event-note,
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.event-state {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--muted);
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.empty {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fffaf4;
+  padding: 18px;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .manage-app {
+    width: min(100% - 16px, 720px);
+    padding-top: 12px;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+
+  .status {
+    width: 100%;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+}

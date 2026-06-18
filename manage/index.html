@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>&#26085;&#31243;&#30331;&#35760;</title>
+    <link rel="stylesheet" href="/manage.css" />
+  </head>
+  <body>
+    <main class="manage-app">
+      <header class="hero">
+        <div>
+          <p>Rli Calendar Sync</p>
+          <h1>&#26085;&#31243;&#30331;&#35760;</h1>
+        </div>
+        <span class="status" id="status">&#36830;&#25509;&#20013;...</span>
+      </header>
+
+      <section class="card">
+        <form id="eventForm">
+          <label>
+            <span>&#26085;&#26399;</span>
+            <input id="dateInput" type="date" required />
+          </label>
+
+          <div class="time-grid">
+            <label>
+              <span>&#24320;&#22987;&#26102;&#38388;</span>
+              <input id="startTimeInput" type="time" />
+            </label>
+            <label>
+              <span>&#32467;&#26463;&#26102;&#38388;</span>
+              <input id="endTimeInput" type="time" />
+            </label>
+          </div>
+
+          <label>
+            <span>&#36731;&#37325;&#32531;&#24613;</span>
+            <select id="priorityInput">
+              <option value="urgent">&#19968; &#26368;&#24613;</option>
+              <option value="high">&#20108; &#36739;&#24613;</option>
+              <option value="normal" selected>&#19977; &#19968;&#33324;</option>
+              <option value="low">&#22235; &#19981;&#24613;</option>
+            </select>
+          </label>
+
+          <label>
+            <span>&#35201;&#20570;&#30340;&#20107;&#24773;</span>
+            <input id="titleInput" type="text" maxlength="80" placeholder="&#20363;&#22914;&#65306;&#24320;&#20250;&#12289;&#20132;&#26448;&#26009;" required />
+          </label>
+
+          <label>
+            <span>&#22791;&#27880;</span>
+            <textarea id="noteInput" rows="3" maxlength="500" placeholder="&#21487;&#19981;&#22635;"></textarea>
+          </label>
+
+          <button class="primary-button" type="submit">&#28155;&#21152;&#21040;&#36873;&#20013;&#26085;&#26399;</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="list-head">
+          <div>
+            <p>&#24403;&#22825;&#20107;&#39033;</p>
+            <h2 id="selectedTitle"></h2>
+          </div>
+          <button class="ghost-button" id="refreshButton" type="button">&#21047;&#26032;</button>
+        </div>
+        <div class="event-list" id="eventList"></div>
+      </section>
+    </main>
+
+    <script src="/manage.js"></script>
+  </body>
+</html>

@@ -89,6 +89,7 @@ let currentMonth = startOfMonth(new Date());
 let selectedDate = toDateKey(new Date());
 let stream;
 let pageFullscreen = false;
+let currentTime = new Date();
 
 document.querySelector("#prevMonth").addEventListener("click", () => {
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
@@ -135,6 +136,11 @@ document.addEventListener("keydown", (event) => {
     closeDayDialog();
   }
 });
+
+setInterval(() => {
+  currentTime = new Date();
+  render();
+}, 30000);
 
 function startOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -230,8 +236,9 @@ function renderCalendar() {
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const dateKey = toDateKey(date);
-    const dayEvents = sortEventsForDisplay(byDate.get(dateKey) || []);
-    const previewEvents = dayEvents.slice(0, MAX_PREVIEW_EVENTS);
+    const allDayEvents = sortEventsForDisplay(byDate.get(dateKey) || []);
+    const activeDayEvents = allDayEvents.filter((item) => !isEventExpired(item, currentTime));
+    const previewEvents = activeDayEvents.slice(0, MAX_PREVIEW_EVENTS);
     const dayMeta = getDayMeta(date);
     const button = document.createElement("button");
     button.type = "button";
@@ -241,7 +248,7 @@ function renderCalendar() {
       date.getMonth() === currentMonth.getMonth() ? "" : "outside",
       dateKey === toDateKey(new Date()) ? "today" : "",
       dateKey === selectedDate ? "selected" : "",
-      dayEvents.length > 1 ? "has-many-events" : "",
+      activeDayEvents.length > 1 ? "has-many-events" : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -253,9 +260,9 @@ function renderCalendar() {
           ${dayMeta.holiday ? `<span class="holiday">${escapeHtml(dayMeta.holiday)}</span>` : ""}
           <span class="lunar">${escapeHtml(dayMeta.lunar)}</span>
           ${
-            dayEvents.length
-              ? `<span class="event-dots" aria-label="${dayEvents.length} \u4ef6\u4e8b\u60c5">
-                  ${dayEvents
+            activeDayEvents.length
+              ? `<span class="event-dots" aria-label="${activeDayEvents.length} \u4ef6\u4e8b\u60c5">
+                  ${activeDayEvents
                     .map((item) => `<span class="event-dot ${getPriority(item).className}"></span>`)
                     .join("")}
                 </span>`
@@ -275,8 +282,8 @@ function renderCalendar() {
           )
           .join("")}
         ${
-          dayEvents.length > MAX_PREVIEW_EVENTS
-            ? `<span class="event-more">\u5171 ${dayEvents.length} \u4ef6\uff0c\u70b9\u5f00\u770b\u5168\u90e8</span>`
+          activeDayEvents.length > MAX_PREVIEW_EVENTS
+            ? `<span class="event-more">\u5171 ${activeDayEvents.length} \u4ef6\uff0c\u70b9\u5f00\u770b\u5168\u90e8</span>`
             : ""
         }
       </span>
@@ -305,7 +312,8 @@ function appendEmptyDay() {
 }
 
 function formatEventTitle(item) {
-  return item.time ? `${item.time} ${item.title}` : item.title;
+  const timeText = formatEventTimeRange(item);
+  return timeText ? `${timeText} ${item.title}` : item.title;
 }
 
 function getPriority(item) {
@@ -317,11 +325,53 @@ function sortEventsForDisplay(items) {
     const priorityCompare = getPriority(a).rank - getPriority(b).rank;
     if (priorityCompare !== 0) return priorityCompare;
 
-    const timeCompare = String(a.time || "99:99").localeCompare(String(b.time || "99:99"));
+    const timeCompare = String(getEventStartTime(a) || "99:99").localeCompare(
+      String(getEventStartTime(b) || "99:99"),
+    );
     if (timeCompare !== 0) return timeCompare;
+
+    const endCompare = String(getEventEndTime(a) || "99:99").localeCompare(
+      String(getEventEndTime(b) || "99:99"),
+    );
+    if (endCompare !== 0) return endCompare;
 
     return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
   });
+}
+
+function getEventStartTime(item) {
+  return item.startTime || item.time || "";
+}
+
+function getEventEndTime(item) {
+  return item.endTime || "";
+}
+
+function formatEventTimeRange(item) {
+  const startTime = getEventStartTime(item);
+  const endTime = getEventEndTime(item);
+  if (startTime && endTime) return `${startTime}-${endTime}`;
+  if (startTime) return startTime;
+  if (endTime) return `\u81f3 ${endTime}`;
+  return "";
+}
+
+function isEventExpired(item, now) {
+  const endDate = getEventEndDate(item);
+  return endDate ? endDate.getTime() < now.getTime() : false;
+}
+
+function getEventEndDate(item) {
+  if (!item.date) return null;
+  const [year, month, day] = String(item.date).split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  const endTime = getEventEndTime(item) || getEventStartTime(item) || "23:59";
+  const [hour, minute] = endTime.split(":").map(Number);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return new Date(year, month - 1, day, 23, 59, 59, 999);
+  }
+  return new Date(year, month - 1, day, hour, minute, 59, 999);
 }
 
 function openDayDialog(dateKey) {
