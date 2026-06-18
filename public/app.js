@@ -3,6 +3,64 @@ const monthTitleEl = document.querySelector("#monthTitle");
 const syncStatusEl = document.querySelector("#syncStatus");
 const fullscreenButton = document.querySelector("#fullscreenButton");
 
+const chineseCalendarFormatter = new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+  month: "long",
+  day: "numeric",
+});
+
+const SOLAR_HOLIDAYS = {
+  "01-01": "\u5143\u65e6",
+  "05-01": "\u52b3\u52a8\u8282",
+  "06-01": "\u513f\u7ae5\u8282",
+  "10-01": "\u56fd\u5e86\u8282",
+};
+
+const LUNAR_HOLIDAYS = {
+  "\u6b63\u6708\u521d\u4e00": "\u6625\u8282",
+  "\u6b63\u6708\u5341\u4e94": "\u5143\u5bb5\u8282",
+  "\u4e8c\u6708\u521d\u4e8c": "\u9f99\u62ac\u5934",
+  "\u4e94\u6708\u521d\u4e94": "\u7aef\u5348\u8282",
+  "\u4e03\u6708\u521d\u4e03": "\u4e03\u5915",
+  "\u516b\u6708\u5341\u4e94": "\u4e2d\u79cb\u8282",
+  "\u4e5d\u6708\u521d\u4e5d": "\u91cd\u9633\u8282",
+  "\u814a\u6708\u521d\u516b": "\u814a\u516b\u8282",
+  "\u814a\u6708\u5eff\u4e09": "\u5c0f\u5e74",
+};
+
+const LUNAR_DAY_NAMES = [
+  "",
+  "\u521d\u4e00",
+  "\u521d\u4e8c",
+  "\u521d\u4e09",
+  "\u521d\u56db",
+  "\u521d\u4e94",
+  "\u521d\u516d",
+  "\u521d\u4e03",
+  "\u521d\u516b",
+  "\u521d\u4e5d",
+  "\u521d\u5341",
+  "\u5341\u4e00",
+  "\u5341\u4e8c",
+  "\u5341\u4e09",
+  "\u5341\u56db",
+  "\u5341\u4e94",
+  "\u5341\u516d",
+  "\u5341\u4e03",
+  "\u5341\u516b",
+  "\u5341\u4e5d",
+  "\u4e8c\u5341",
+  "\u5eff\u4e00",
+  "\u5eff\u4e8c",
+  "\u5eff\u4e09",
+  "\u5eff\u56db",
+  "\u5eff\u4e94",
+  "\u5eff\u516d",
+  "\u5eff\u4e03",
+  "\u5eff\u516b",
+  "\u5eff\u4e5d",
+  "\u4e09\u5341",
+];
+
 let events = [];
 let currentMonth = startOfMonth(new Date());
 let selectedDate = toDateKey(new Date());
@@ -125,6 +183,7 @@ function renderCalendar() {
     date.setDate(gridStart.getDate() + index);
     const dateKey = toDateKey(date);
     const dayEvents = byDate.get(dateKey) || [];
+    const dayMeta = getDayMeta(date);
     const button = document.createElement("button");
     button.type = "button";
     button.className = [
@@ -137,11 +196,17 @@ function renderCalendar() {
       .join(" ");
 
     button.innerHTML = `
-      <span class="date-number">${date.getDate()}</span>
+      <span class="day-head">
+        <span class="date-number">${date.getDate()}</span>
+        <span class="day-meta">
+          ${dayMeta.holiday ? `<span class="holiday">${escapeHtml(dayMeta.holiday)}</span>` : ""}
+          <span class="lunar">${escapeHtml(dayMeta.lunar)}</span>
+        </span>
+      </span>
       <span class="badges">
         ${dayEvents
           .slice(0, 4)
-          .map((item) => `<span class="badge">${escapeHtml(item.title)}</span>`)
+          .map((item) => `<span class="badge">${escapeHtml(formatEventTitle(item))}</span>`)
           .join("")}
         ${dayEvents.length > 4 ? `<span class="more">\u8fd8\u6709 ${dayEvents.length - 4} \u6761</span>` : ""}
       </span>
@@ -157,6 +222,51 @@ function renderCalendar() {
 
     calendarEl.appendChild(button);
   }
+}
+
+function formatEventTitle(item) {
+  return item.time ? `${item.time} ${item.title}` : item.title;
+}
+
+function getDayMeta(date) {
+  const lunar = getLunarText(date);
+  const solarHoliday = SOLAR_HOLIDAYS[toDateKey(date).slice(5)] || "";
+  const lunarHoliday = LUNAR_HOLIDAYS[lunar.key] || "";
+  const holiday = getQingmingName(date) || getNewYearEveName(date) || solarHoliday || lunarHoliday;
+  return {
+    lunar: holiday ? lunar.text : `\u519c\u5386${lunar.text}`,
+    holiday,
+  };
+}
+
+function getLunarText(date) {
+  const raw = chineseCalendarFormatter.format(date);
+  const match = /^(.+?)(\d+)\u65e5$/.exec(raw);
+  if (!match) {
+    return { text: raw, key: raw };
+  }
+
+  const month = match[1];
+  const day = LUNAR_DAY_NAMES[Number(match[2])] || `${match[2]}\u65e5`;
+  const text = `${month}${day}`;
+  return { text, key: text };
+}
+
+function getQingmingName(date) {
+  return date.getMonth() === 3 && date.getDate() === getQingmingDay(date.getFullYear())
+    ? "\u6e05\u660e\u8282"
+    : "";
+}
+
+function getQingmingDay(year) {
+  const shortYear = year % 100;
+  return Math.floor(shortYear * 0.2422 + 4.81) - Math.floor((shortYear - 1) / 4);
+}
+
+function getNewYearEveName(date) {
+  const tomorrow = new Date(date);
+  tomorrow.setDate(date.getDate() + 1);
+  return getLunarText(tomorrow).key === "\u6b63\u6708\u521d\u4e00" ? "\u9664\u5915" : "";
 }
 
 function escapeHtml(value) {

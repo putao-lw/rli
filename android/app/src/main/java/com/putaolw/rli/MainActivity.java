@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
 
     private EditText serverInput;
     private EditText titleInput;
+    private EditText timeInput;
     private EditText noteInput;
     private DatePicker datePicker;
     private TextView statusText;
@@ -111,6 +112,10 @@ public class MainActivity extends Activity {
                 }
         );
         root.addView(datePicker);
+
+        root.addView(label("时间"));
+        timeInput = input("例如：09:30（可不填）", false);
+        root.addView(timeInput);
 
         root.addView(label("要做的事情"));
         titleInput = input("例如：开会、交材料、买药", false);
@@ -257,6 +262,7 @@ public class MainActivity extends Activity {
     private void saveEvent() {
         final String serverUrl = normalizeServerUrl();
         final String title = titleInput.getText().toString().trim();
+        final String time = normalizeTime(timeInput.getText().toString().trim());
         final String note = noteInput.getText().toString().trim();
 
         if (serverUrl.length() == 0) {
@@ -269,6 +275,11 @@ public class MainActivity extends Activity {
             return;
         }
 
+        if (time == null) {
+            setStatus("时间格式请填写 HH:mm，例如 09:30", true);
+            return;
+        }
+
         saveServerConfig(serverUrl);
         setStatus("正在登记...", false);
 
@@ -278,6 +289,7 @@ public class MainActivity extends Activity {
                 try {
                     JSONObject body = new JSONObject();
                     body.put("date", selectedDate());
+                    body.put("time", time);
                     body.put("title", title);
                     body.put("note", note);
                     request("POST", serverUrl + "/api/events", body.toString());
@@ -286,6 +298,7 @@ public class MainActivity extends Activity {
                         @Override
                         public void run() {
                             titleInput.setText("");
+                            timeInput.setText("");
                             noteInput.setText("");
                         }
                     });
@@ -339,7 +352,12 @@ public class MainActivity extends Activity {
             if (builder.length() > 0) {
                 builder.append("\n\n");
             }
-            builder.append("• ").append(item.optString("title"));
+            String itemTime = item.optString("time");
+            builder.append("• ");
+            if (itemTime.length() > 0) {
+                builder.append(itemTime).append(" ");
+            }
+            builder.append(item.optString("title"));
             String note = item.optString("note");
             if (note.length() > 0) {
                 builder.append("\n  ").append(note);
@@ -357,6 +375,28 @@ public class MainActivity extends Activity {
         String month = String.format(Locale.US, "%02d", datePicker.getMonth() + 1);
         String day = String.format(Locale.US, "%02d", datePicker.getDayOfMonth());
         return year + "-" + month + "-" + day;
+    }
+
+    private String normalizeTime(String raw) {
+        if (raw.length() == 0) {
+            return "";
+        }
+
+        String[] parts = raw.split(":", -1);
+        if (parts.length != 2) {
+            return null;
+        }
+
+        try {
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || parts[1].length() != 2) {
+                return null;
+            }
+            return String.format(Locale.US, "%02d:%02d", hour, minute);
+        } catch (NumberFormatException error) {
+            return null;
+        }
     }
 
     private void setStatus(final String message, final boolean isError) {

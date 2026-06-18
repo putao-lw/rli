@@ -37,6 +37,8 @@ async function readEvents() {
   return events.sort((a, b) => {
     const dateCompare = String(a.date).localeCompare(String(b.date));
     if (dateCompare !== 0) return dateCompare;
+    const timeCompare = String(a.time || "99:99").localeCompare(String(b.time || "99:99"));
+    if (timeCompare !== 0) return timeCompare;
     return String(a.createdAt).localeCompare(String(b.createdAt));
   });
 }
@@ -68,6 +70,7 @@ function isIsoDate(value) {
 
 function cleanPayload(body) {
   const date = String(body.date || "").trim();
+  const time = normalizeEventTime(body.time);
   const title = String(body.title || "").trim();
   const note = String(body.note || "").trim();
 
@@ -85,9 +88,25 @@ function cleanPayload(body) {
 
   return {
     date,
+    time,
     title: title.slice(0, 80),
     note: note.slice(0, 500),
   };
+}
+
+function normalizeEventTime(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const match = /^(\d{1,2}):([0-5]\d)$/.exec(raw);
+  const hour = match ? Number(match[1]) : Number.NaN;
+  if (!match || hour > 23) {
+    const error = new Error("时间格式必须是 HH:mm，例如 09:30");
+    error.status = 400;
+    throw error;
+  }
+
+  return `${String(hour).padStart(2, "0")}:${match[2]}`;
 }
 
 function sendSse(res, event, payload) {
