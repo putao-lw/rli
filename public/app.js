@@ -214,6 +214,8 @@ function renderCalendar() {
     currentMonth.getMonth() + 1,
     0,
   ).getDate();
+  const totalCells = Math.ceil((mondayOffset + daysInMonth) / 7) * 7;
+  calendarEl.style.setProperty("--calendar-weeks", String(totalCells / 7));
 
   const byDate = events.reduce((map, item) => {
     if (!map.has(item.date)) map.set(item.date, []);
@@ -239,6 +241,7 @@ function renderCalendar() {
       date.getMonth() === currentMonth.getMonth() ? "" : "outside",
       dateKey === toDateKey(new Date()) ? "today" : "",
       dateKey === selectedDate ? "selected" : "",
+      dayEvents.length > 1 ? "has-many-events" : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -289,7 +292,7 @@ function renderCalendar() {
   }
 
   const filledCells = mondayOffset + daysInMonth;
-  for (let index = filledCells; index < 42; index += 1) {
+  for (let index = filledCells; index < totalCells; index += 1) {
     appendEmptyDay();
   }
 }

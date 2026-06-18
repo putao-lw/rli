@@ -208,7 +208,7 @@ h2 {
 
 .calendar {
   flex: 1;
-  grid-template-rows: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--calendar-weeks, 6), minmax(0, 1fr));
   min-height: 0;
 }
 
@@ -307,8 +307,8 @@ h2 {
 .badges {
   display: grid;
   align-content: start;
-  gap: 6px;
-  margin-top: 9px;
+  gap: 4px;
+  margin-top: 6px;
   min-height: 0;
   overflow: hidden;
 }
@@ -320,9 +320,49 @@ h2 {
   gap: 5px;
   border-radius: 6px;
   color: #71401f;
-  padding: 5px 6px;
+  padding: 4px 6px;
   font-size: 12px;
-  line-height: 1.35;
+  line-height: 1.25;
+}
+
+.day.has-many-events {
+  padding: 8px;
+}
+
+.day.has-many-events .event-line {
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  min-height: 17px;
+  padding: 2px 5px;
+  line-height: 1.15;
+}
+
+.day.has-many-events .date-number {
+  min-width: 34px;
+  height: 34px;
+  font-size: 20px;
+}
+
+.day.has-many-events .day-meta {
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.day.has-many-events .event-dots {
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.day.has-many-events .badges {
+  gap: 2px;
+  margin-top: 3px;
+}
+
+.day.has-many-events .event-index {
+  width: 15px;
+  height: 15px;
+  font-size: 10px;
 }
 
 .priority-urgent {
@@ -361,18 +401,24 @@ h2 {
 
 .event-text {
   min-width: 0;
-  max-height: 48px;
+  max-height: 2.5em;
   overflow: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.day.has-many-events .event-text {
+  max-height: none;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .event-more {
   border: 1px dashed var(--line);
   border-radius: 6px;
   color: var(--muted);
-  padding: 4px 6px;
-  font-size: 12px;
+  padding: 3px 6px;
+  font-size: 11px;
   text-align: center;
 }
 
