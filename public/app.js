@@ -2,10 +2,23 @@ const calendarEl = document.querySelector("#calendar");
 const monthTitleEl = document.querySelector("#monthTitle");
 const syncStatusEl = document.querySelector("#syncStatus");
 const fullscreenButton = document.querySelector("#fullscreenButton");
+const dayDialog = document.querySelector("#dayDialog");
+const dialogBackdrop = document.querySelector("#dialogBackdrop");
+const dialogClose = document.querySelector("#dialogClose");
+const dialogTitle = document.querySelector("#dialogTitle");
+const dialogMeta = document.querySelector("#dialogMeta");
+const dialogEvents = document.querySelector("#dialogEvents");
 
 const chineseCalendarFormatter = new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
   month: "long",
   day: "numeric",
+});
+
+const fullDateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "long",
 });
 
 const SOLAR_HOLIDAYS = {
@@ -98,6 +111,13 @@ fullscreenButton.addEventListener("click", async () => {
 });
 
 document.addEventListener("fullscreenchange", updateFullscreenButton);
+dialogBackdrop.addEventListener("click", closeDayDialog);
+dialogClose.addEventListener("click", closeDayDialog);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && dayDialog.classList.contains("open")) {
+    closeDayDialog();
+  }
+});
 
 function startOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -163,6 +183,9 @@ function connectStream() {
 function render() {
   monthTitleEl.textContent = `${currentMonth.getFullYear()}\u5e74 ${currentMonth.getMonth() + 1}\u6708`;
   renderCalendar();
+  if (dayDialog.classList.contains("open")) {
+    renderDayDialog(selectedDate);
+  }
 }
 
 function renderCalendar() {
@@ -192,6 +215,7 @@ function renderCalendar() {
     const dayMeta = getDayMeta(date);
     const button = document.createElement("button");
     button.type = "button";
+    button.dataset.date = dateKey;
     button.className = [
       "day",
       date.getMonth() === currentMonth.getMonth() ? "" : "outside",
@@ -211,19 +235,22 @@ function renderCalendar() {
       </span>
       <span class="badges">
         ${dayEvents
-          .slice(0, 4)
-          .map((item) => `<span class="badge">${escapeHtml(formatEventTitle(item))}</span>`)
+          .map(
+            (item, itemIndex) => `
+              <span class="event-line">
+                <span class="event-index">${itemIndex + 1}</span>
+                <span class="event-text">${escapeHtml(formatEventTitle(item))}</span>
+              </span>
+            `,
+          )
           .join("")}
-        ${dayEvents.length > 4 ? `<span class="more">\u8fd8\u6709 ${dayEvents.length - 4} \u6761</span>` : ""}
       </span>
     `;
 
     button.addEventListener("click", () => {
       selectedDate = dateKey;
-      if (date.getMonth() !== currentMonth.getMonth()) {
-        currentMonth = startOfMonth(date);
-      }
       render();
+      openDayDialog(dateKey);
     });
 
     calendarEl.appendChild(button);
@@ -244,6 +271,47 @@ function appendEmptyDay() {
 
 function formatEventTitle(item) {
   return item.time ? `${item.time} ${item.title}` : item.title;
+}
+
+function openDayDialog(dateKey) {
+  renderDayDialog(dateKey);
+  dayDialog.classList.add("open");
+  dayDialog.setAttribute("aria-hidden", "false");
+}
+
+function renderDayDialog(dateKey) {
+  const date = fromDateKey(dateKey);
+  const dayMeta = getDayMeta(date);
+  const dayEvents = events.filter((item) => item.date === dateKey);
+
+  dialogTitle.textContent = fullDateFormatter.format(date);
+  dialogMeta.textContent = [dayMeta.holiday, dayMeta.lunar].filter(Boolean).join(" · ");
+  dialogEvents.innerHTML =
+    dayEvents.length > 0
+      ? dayEvents
+          .map(
+            (item, index) => `
+              <article class="dialog-event">
+                <span class="dialog-event-index">${index + 1}</span>
+                <div>
+                  <strong>${escapeHtml(formatEventTitle(item))}</strong>
+                  ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
+                </div>
+              </article>
+            `,
+          )
+          .join("")
+      : `<div class="dialog-empty">\u8fd9\u4e00\u5929\u8fd8\u6ca1\u6709\u767b\u8bb0\u4e8b\u60c5\u3002</div>`;
+}
+
+function closeDayDialog() {
+  dayDialog.classList.remove("open");
+  dayDialog.setAttribute("aria-hidden", "true");
+}
+
+function fromDateKey(dateKey) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function getDayMeta(date) {

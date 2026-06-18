@@ -50,6 +50,27 @@
       </section>
     </main>
 
+    <div class="day-dialog" id="dayDialog" aria-hidden="true">
+      <button class="dialog-backdrop" id="dialogBackdrop" type="button" aria-label="&#20851;&#38381;"></button>
+      <section
+        class="dialog-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialogTitle"
+      >
+        <div class="dialog-head">
+          <div>
+            <p class="dialog-meta" id="dialogMeta"></p>
+            <h2 id="dialogTitle"></h2>
+          </div>
+          <button class="dialog-close" id="dialogClose" type="button" aria-label="&#20851;&#38381;">
+            &times;
+          </button>
+        </div>
+        <div class="dialog-events" id="dialogEvents"></div>
+      </section>
+    </div>
+
     <script src="/app.js"></script>
   </body>
 </html>
