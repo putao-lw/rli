@@ -8,11 +8,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -42,9 +44,10 @@ public class MainActivity extends Activity {
     private EditText titleInput;
     private EditText timeInput;
     private EditText noteInput;
+    private Spinner priorityInput;
     private DatePicker datePicker;
     private TextView statusText;
-    private TextView selectedEventsText;
+    private LinearLayout selectedEventsList;
     private JSONArray cachedEvents = new JSONArray();
 
     @Override
@@ -117,6 +120,18 @@ public class MainActivity extends Activity {
         timeInput = input("例如：09:30（可不填）", false);
         root.addView(timeInput);
 
+        root.addView(label("轻重缓急"));
+        priorityInput = new Spinner(this);
+        ArrayAdapter<String> priorityAdapter = new ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"紧急", "重要", "普通", "不急"}
+        );
+        priorityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        priorityInput.setAdapter(priorityAdapter);
+        priorityInput.setSelection(2);
+        root.addView(priorityInput);
+
         root.addView(label("要做的事情"));
         titleInput = input("例如：开会、交材料、买药", false);
         root.addView(titleInput);
@@ -147,11 +162,9 @@ public class MainActivity extends Activity {
         listTitle.setPadding(0, dp(18), 0, dp(8));
         root.addView(listTitle);
 
-        selectedEventsText = text("", 15, false);
-        selectedEventsText.setLineSpacing(0, 1.2f);
-        selectedEventsText.setPadding(dp(12), dp(12), dp(12), dp(12));
-        selectedEventsText.setBackgroundColor(Color.rgb(255, 250, 244));
-        root.addView(selectedEventsText);
+        selectedEventsList = new LinearLayout(this);
+        selectedEventsList.setOrientation(LinearLayout.VERTICAL);
+        root.addView(selectedEventsList);
 
         setContentView(scrollView);
     }
@@ -263,6 +276,7 @@ public class MainActivity extends Activity {
         final String serverUrl = normalizeServerUrl();
         final String title = titleInput.getText().toString().trim();
         final String time = normalizeTime(timeInput.getText().toString().trim());
+        final String priority = selectedPriority();
         final String note = noteInput.getText().toString().trim();
 
         if (serverUrl.length() == 0) {
@@ -290,6 +304,7 @@ public class MainActivity extends Activity {
                     JSONObject body = new JSONObject();
                     body.put("date", selectedDate());
                     body.put("time", time);
+                    body.put("priority", priority);
                     body.put("title", title);
                     body.put("note", note);
                     request("POST", serverUrl + "/api/events", body.toString());
@@ -299,6 +314,7 @@ public class MainActivity extends Activity {
                         public void run() {
                             titleInput.setText("");
                             timeInput.setText("");
+                            priorityInput.setSelection(2);
                             noteInput.setText("");
                         }
                     });
@@ -343,17 +359,17 @@ public class MainActivity extends Activity {
 
     private void renderSelectedEvents() {
         String date = selectedDate();
-        StringBuilder builder = new StringBuilder();
+        selectedEventsList.removeAllViews();
+        boolean hasEvents = false;
         for (int index = 0; index < cachedEvents.length(); index++) {
             JSONObject item = cachedEvents.optJSONObject(index);
             if (item == null || !date.equals(item.optString("date"))) {
                 continue;
             }
-            if (builder.length() > 0) {
-                builder.append("\n\n");
-            }
+            hasEvents = true;
             String itemTime = item.optString("time");
-            builder.append("• ");
+            StringBuilder builder = new StringBuilder();
+            builder.append(priorityLabel(item.optString("priority"))).append("  ");
             if (itemTime.length() > 0) {
                 builder.append(itemTime).append(" ");
             }
@@ -362,12 +378,70 @@ public class MainActivity extends Activity {
             if (note.length() > 0) {
                 builder.append("\n  ").append(note);
             }
+            selectedEventsList.addView(eventRow(
+                    item.optString("id"),
+                    item.optString("priority"),
+                    builder.toString()
+            ));
         }
 
-        if (builder.length() == 0) {
-            builder.append(date).append("\n还没有登记事情。");
+        if (!hasEvents) {
+            TextView empty = text(date + "\n还没有登记事情。", 15, false);
+            empty.setTextColor(Color.rgb(128, 95, 72));
+            empty.setPadding(dp(12), dp(12), dp(12), dp(12));
+            empty.setBackgroundColor(Color.rgb(255, 250, 244));
+            selectedEventsList.addView(empty);
         }
-        selectedEventsText.setText(builder.toString());
+    }
+
+    private View eventRow(final String eventId, String priority, String content) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(dp(12), dp(10), dp(12), dp(10));
+        row.setBackgroundColor(priorityColor(priority));
+
+        TextView contentView = text(content, 15, false);
+        contentView.setLineSpacing(0, 1.2f);
+        row.addView(contentView);
+
+        Button deleteButton = secondaryButton("取消这件事");
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                deleteEvent(eventId);
+            }
+        });
+        row.addView(deleteButton);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, dp(10));
+        row.setLayoutParams(params);
+        return row;
+    }
+
+    private void deleteEvent(final String eventId) {
+        final String serverUrl = normalizeServerUrl();
+        if (serverUrl.length() == 0 || eventId.length() == 0) {
+            setStatus("请先填写并检查服务器地址", true);
+            return;
+        }
+
+        setStatus("正在取消...", false);
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    request("DELETE", serverUrl + "/api/events/" + eventId, null);
+                    setStatus("已取消，并同步到网页端", false);
+                    fetchEvents();
+                } catch (Exception error) {
+                    setStatus("取消失败：" + error.getMessage(), true);
+                }
+            }
+        });
     }
 
     private String selectedDate() {
@@ -397,6 +471,46 @@ public class MainActivity extends Activity {
         } catch (NumberFormatException error) {
             return null;
         }
+    }
+
+    private String selectedPriority() {
+        int position = priorityInput.getSelectedItemPosition();
+        if (position == 0) {
+            return "urgent";
+        }
+        if (position == 1) {
+            return "high";
+        }
+        if (position == 3) {
+            return "low";
+        }
+        return "normal";
+    }
+
+    private String priorityLabel(String priority) {
+        if ("urgent".equals(priority)) {
+            return "紧急";
+        }
+        if ("high".equals(priority)) {
+            return "重要";
+        }
+        if ("low".equals(priority)) {
+            return "不急";
+        }
+        return "普通";
+    }
+
+    private int priorityColor(String priority) {
+        if ("urgent".equals(priority)) {
+            return Color.rgb(255, 224, 219);
+        }
+        if ("high".equals(priority)) {
+            return Color.rgb(255, 232, 197);
+        }
+        if ("low".equals(priority)) {
+            return Color.rgb(231, 243, 223);
+        }
+        return Color.rgb(255, 226, 202);
     }
 
     private void setStatus(final String message, final boolean isError) {

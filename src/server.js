@@ -11,6 +11,12 @@ const DATA_FILE = path.join(DATA_DIR, "events.json");
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 
 const clients = new Set();
+const PRIORITY_RANK = {
+  urgent: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
 let mutationQueue = Promise.resolve();
 
 app.use(cors());
@@ -37,6 +43,8 @@ async function readEvents() {
   return events.sort((a, b) => {
     const dateCompare = String(a.date).localeCompare(String(b.date));
     if (dateCompare !== 0) return dateCompare;
+    const priorityCompare = getPriorityRank(a.priority) - getPriorityRank(b.priority);
+    if (priorityCompare !== 0) return priorityCompare;
     const timeCompare = String(a.time || "99:99").localeCompare(String(b.time || "99:99"));
     if (timeCompare !== 0) return timeCompare;
     return String(a.createdAt).localeCompare(String(b.createdAt));
@@ -71,6 +79,7 @@ function isIsoDate(value) {
 function cleanPayload(body) {
   const date = String(body.date || "").trim();
   const time = normalizeEventTime(body.time);
+  const priority = normalizePriority(body.priority);
   const title = String(body.title || "").trim();
   const note = String(body.note || "").trim();
 
@@ -89,9 +98,19 @@ function cleanPayload(body) {
   return {
     date,
     time,
+    priority,
     title: title.slice(0, 80),
     note: note.slice(0, 500),
   };
+}
+
+function getPriorityRank(priority) {
+  return PRIORITY_RANK[priority] ?? PRIORITY_RANK.normal;
+}
+
+function normalizePriority(value) {
+  const priority = String(value || "normal").trim();
+  return Object.hasOwn(PRIORITY_RANK, priority) ? priority : "normal";
 }
 
 function normalizeEventTime(value) {

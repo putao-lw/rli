@@ -74,6 +74,15 @@ const LUNAR_DAY_NAMES = [
   "\u4e09\u5341",
 ];
 
+const MAX_PREVIEW_EVENTS = 3;
+
+const PRIORITIES = {
+  urgent: { label: "\u7d27\u6025", className: "priority-urgent" },
+  high: { label: "\u91cd\u8981", className: "priority-high" },
+  normal: { label: "\u666e\u901a", className: "priority-normal" },
+  low: { label: "\u4e0d\u6025", className: "priority-low" },
+};
+
 let events = [];
 let currentMonth = startOfMonth(new Date());
 let selectedDate = toDateKey(new Date());
@@ -212,6 +221,7 @@ function renderCalendar() {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const dateKey = toDateKey(date);
     const dayEvents = byDate.get(dateKey) || [];
+    const previewEvents = dayEvents.slice(0, MAX_PREVIEW_EVENTS);
     const dayMeta = getDayMeta(date);
     const button = document.createElement("button");
     button.type = "button";
@@ -234,16 +244,22 @@ function renderCalendar() {
         </span>
       </span>
       <span class="badges">
-        ${dayEvents
+        ${previewEvents
           .map(
             (item, itemIndex) => `
-              <span class="event-line">
+              <span class="event-line ${getPriority(item).className}">
                 <span class="event-index">${itemIndex + 1}</span>
+                <span class="priority-chip">${getPriority(item).label}</span>
                 <span class="event-text">${escapeHtml(formatEventTitle(item))}</span>
               </span>
             `,
           )
           .join("")}
+        ${
+          dayEvents.length > MAX_PREVIEW_EVENTS
+            ? `<span class="event-more">\u5171 ${dayEvents.length} \u4ef6\uff0c\u70b9\u5f00\u770b\u5168\u90e8</span>`
+            : ""
+        }
       </span>
     `;
 
@@ -273,6 +289,10 @@ function formatEventTitle(item) {
   return item.time ? `${item.time} ${item.title}` : item.title;
 }
 
+function getPriority(item) {
+  return PRIORITIES[item.priority] || PRIORITIES.normal;
+}
+
 function openDayDialog(dateKey) {
   renderDayDialog(dateKey);
   dayDialog.classList.add("open");
@@ -292,8 +312,9 @@ function renderDayDialog(dateKey) {
           .map(
             (item, index) => `
               <article class="dialog-event">
-                <span class="dialog-event-index">${index + 1}</span>
+                <span class="dialog-event-index ${getPriority(item).className}">${index + 1}</span>
                 <div>
+                  <span class="dialog-priority ${getPriority(item).className}">${getPriority(item).label}</span>
                   <strong>${escapeHtml(formatEventTitle(item))}</strong>
                   ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
                 </div>
