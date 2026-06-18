@@ -1,0 +1,15 @@
+node_modules/
+npm-debug.log*
+server.log
+server.err.log
+data/*.tmp
+
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aab
+
+.DS_Store
+Thumbs.db
+.env

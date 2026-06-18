@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>日历同步</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Rli Calendar Sync</p>
+          <h1>日历同步</h1>
+        </div>
+        <div class="status" id="syncStatus">连接中...</div>
+      </header>
+
+      <section class="calendar-shell">
+        <div class="calendar-panel">
+          <div class="monthbar">
+            <button class="icon-button" id="prevMonth" type="button" aria-label="上个月">‹</button>
+            <div>
+              <p class="muted">当前月份</p>
+              <h2 id="monthTitle"></h2>
+            </div>
+            <button class="icon-button" id="nextMonth" type="button" aria-label="下个月">›</button>
+          </div>
+
+          <div class="weekdays" aria-hidden="true">
+            <span>一</span>
+            <span>二</span>
+            <span>三</span>
+            <span>四</span>
+            <span>五</span>
+            <span>六</span>
+            <span>日</span>
+          </div>
+          <div class="calendar" id="calendar" aria-live="polite"></div>
+        </div>
+
+        <aside class="side-panel">
+          <p class="muted">选中日期</p>
+          <h2 id="selectedDateTitle"></h2>
+          <div class="task-list" id="taskList"></div>
+
+          <form class="quick-form" id="quickForm">
+            <label>
+              <span>补录事情</span>
+              <input id="taskTitle" maxlength="80" placeholder="例如：交材料、开会、复诊" required />
+            </label>
+            <label>
+              <span>备注</span>
+              <textarea id="taskNote" maxlength="500" placeholder="可不填"></textarea>
+            </label>
+            <button type="submit">添加到选中日期</button>
+          </form>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

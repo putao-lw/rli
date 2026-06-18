@@ -1,0 +1,17 @@
+{
+  "name": "rli-calendar-sync",
+  "version": "1.0.0",
+  "description": "Simple warm calendar sync web + Android server.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

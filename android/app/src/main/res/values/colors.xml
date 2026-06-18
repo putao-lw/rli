@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="warm_bg">#FFF7EE</color>
+    <color name="warm_panel">#FFFFFF</color>
+    <color name="warm_accent">#E67E45</color>
+    <color name="warm_text">#3B2A1F</color>
+</resources>
