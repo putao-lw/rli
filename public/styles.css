@@ -220,6 +220,11 @@ h2 {
   color: #b39b88;
 }
 
+.day.placeholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .day.today .date-number {
   background: var(--accent);
   color: #fff;

@@ -169,8 +169,11 @@ function renderCalendar() {
   calendarEl.innerHTML = "";
   const firstDay = startOfMonth(currentMonth);
   const mondayOffset = (firstDay.getDay() + 6) % 7;
-  const gridStart = new Date(firstDay);
-  gridStart.setDate(firstDay.getDate() - mondayOffset);
+  const daysInMonth = new Date(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1,
+    0,
+  ).getDate();
 
   const byDate = events.reduce((map, item) => {
     if (!map.has(item.date)) map.set(item.date, []);
@@ -178,9 +181,12 @@ function renderCalendar() {
     return map;
   }, new Map());
 
-  for (let index = 0; index < 42; index += 1) {
-    const date = new Date(gridStart);
-    date.setDate(gridStart.getDate() + index);
+  for (let index = 0; index < mondayOffset; index += 1) {
+    appendEmptyDay();
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const dateKey = toDateKey(date);
     const dayEvents = byDate.get(dateKey) || [];
     const dayMeta = getDayMeta(date);
@@ -222,6 +228,18 @@ function renderCalendar() {
 
     calendarEl.appendChild(button);
   }
+
+  const filledCells = mondayOffset + daysInMonth;
+  for (let index = filledCells; index < 42; index += 1) {
+    appendEmptyDay();
+  }
+}
+
+function appendEmptyDay() {
+  const cell = document.createElement("div");
+  cell.className = "day placeholder";
+  cell.setAttribute("aria-hidden", "true");
+  calendarEl.appendChild(cell);
 }
 
 function formatEventTitle(item) {
