@@ -19,8 +19,7 @@
 
 html,
 body {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 body {
@@ -42,9 +41,8 @@ button {
   display: flex;
   flex-direction: column;
   width: min(1280px, calc(100% - 24px));
-  height: 100dvh;
+  min-height: 100dvh;
   margin: 0 auto;
-  overflow: hidden;
   padding: 18px 0;
 }
 
@@ -127,15 +125,11 @@ h2 {
 
 .calendar-shell {
   flex: 1;
-  min-height: 0;
 }
 
 .calendar-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
   background: rgba(255, 255, 255, 0.84);
   border: 1px solid rgba(239, 214, 189, 0.9);
   border-radius: 8px;
@@ -185,15 +179,13 @@ h2 {
 
 .calendar {
   flex: 1;
-  grid-template-rows: repeat(6, minmax(0, 1fr));
-  min-height: 0;
+  grid-template-rows: repeat(6, minmax(122px, auto));
 }
 
 .day {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 122px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -270,10 +262,6 @@ h2 {
   align-content: start;
   gap: 6px;
   margin-top: 9px;
-  min-height: 0;
-  overflow: auto;
-  padding-right: 2px;
-  scrollbar-width: thin;
 }
 
 .event-line {
