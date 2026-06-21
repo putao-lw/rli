@@ -348,9 +348,8 @@ function getEventEndTime(item) {
 
 function formatEventTimeRange(item) {
   const startTime = getEventStartTime(item);
-  const endTime = getEventEndTime(item);
-  if (startTime && endTime) return `${startTime}-${endTime}`;
   if (startTime) return startTime;
+  const endTime = getEventEndTime(item);
   if (endTime) return `\u81f3 ${endTime}`;
   return "";
 }

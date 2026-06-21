@@ -612,13 +612,10 @@ public class MainActivity extends Activity {
 
     private String formatTimeRange(JSONObject item) {
         String start = item.optString("startTime", item.optString("time"));
-        String end = item.optString("endTime");
-        if (start.length() > 0 && end.length() > 0) {
-            return start + "-" + end;
-        }
         if (start.length() > 0) {
             return start;
         }
+        String end = item.optString("endTime");
         if (end.length() > 0) {
             return "至 " + end;
         }
