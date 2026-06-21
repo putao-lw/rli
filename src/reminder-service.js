@@ -11,19 +11,35 @@ function createReminderService(options) {
   const readEvents = options.readEvents;
   const remindersFile = path.join(dataDir, "reminders.json");
   const config = readConfig();
+  const status = {
+    startedAt: null,
+    lastCheckAt: null,
+    lastScannedEvents: 0,
+    lastSkippedNoTime: 0,
+    lastDueCount: 0,
+    lastSentCount: 0,
+    lastSentAt: null,
+    lastError: null,
+    lastErrorAt: null,
+  };
   let checking = false;
   let timer;
 
   async function start() {
+    status.startedAt = new Date().toISOString();
     if (!config.enabled) {
       console.log("Email reminders disabled. Set SMTP_USER, SMTP_PASS and REMINDER_TO to enable.");
       return;
     }
 
     await ensureReminderStore();
-    await checkDueReminders();
+    await checkDueReminders().catch((error) => {
+      recordError(error);
+      console.error("Reminder check failed", error);
+    });
     timer = setInterval(() => {
       checkDueReminders().catch((error) => {
+        recordError(error);
         console.error("Reminder check failed", error);
       });
     }, config.checkIntervalMs);
@@ -41,14 +57,25 @@ function createReminderService(options) {
   async function checkDueReminders(now = new Date()) {
     if (checking) return;
     checking = true;
+    const checkStatus = {
+      lastCheckAt: now.toISOString(),
+      lastScannedEvents: 0,
+      lastSkippedNoTime: 0,
+      lastDueCount: 0,
+      lastSentCount: 0,
+    };
     try {
       const events = await readEvents();
       const sent = await readSentReminders();
       let changed = pruneOldReminders(sent, now);
 
       for (const event of events) {
+        checkStatus.lastScannedEvents += 1;
         const startDate = getEventStartDate(event);
-        if (!startDate) continue;
+        if (!startDate) {
+          checkStatus.lastSkippedNoTime += 1;
+          continue;
+        }
 
         for (const minutesBefore of config.minutes) {
           const dueAt = new Date(startDate.getTime() - minutesBefore * 60000);
@@ -63,7 +90,12 @@ function createReminderService(options) {
             continue;
           }
 
+          checkStatus.lastDueCount += 1;
           await sendReminder(event, minutesBefore, startDate);
+          checkStatus.lastSentCount += 1;
+          status.lastSentAt = new Date().toISOString();
+          status.lastError = null;
+          status.lastErrorAt = null;
           sent[key] = {
             eventId: event.id,
             minutesBefore,
@@ -76,7 +108,11 @@ function createReminderService(options) {
       if (changed) {
         await writeSentReminders(sent);
       }
+    } catch (error) {
+      recordError(error);
+      throw error;
     } finally {
+      Object.assign(status, checkStatus);
       checking = false;
     }
   }
@@ -158,7 +194,30 @@ function createReminderService(options) {
       user: maskEmail(config.user),
       to: maskEmail(config.to),
       minutes: config.minutes,
+      startedAt: status.startedAt,
+      lastCheckAt: status.lastCheckAt,
+      lastScannedEvents: status.lastScannedEvents,
+      lastSkippedNoTime: status.lastSkippedNoTime,
+      lastDueCount: status.lastDueCount,
+      lastSentCount: status.lastSentCount,
+      lastSentAt: status.lastSentAt,
+      lastError: status.lastError,
+      lastErrorAt: status.lastErrorAt,
     }),
+  };
+
+  function recordError(error) {
+    status.lastError = describeError(error);
+    status.lastErrorAt = new Date().toISOString();
+  }
+}
+
+function describeError(error) {
+  return {
+    code: error && error.code ? String(error.code) : "",
+    command: error && error.command ? String(error.command) : "",
+    responseCode: error && error.responseCode ? Number(error.responseCode) : null,
+    message: error && error.message ? String(error.message) : "Unknown reminder error",
   };
 }
 
