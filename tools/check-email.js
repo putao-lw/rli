@@ -1,4 +1,32 @@
 const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
+
+loadEnvFile(path.join(__dirname, "..", ".env"));
+
+function loadEnvFile(filePath) {
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+      const index = trimmed.indexOf("=");
+      const key = trimmed.slice(0, index).trim();
+      let value = trimmed.slice(index + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (key && process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  } catch {
+    // .env is optional.
+  }
+}
 
 function boolEnv(value, fallback) {
   if (value === undefined || value === "") return fallback;
